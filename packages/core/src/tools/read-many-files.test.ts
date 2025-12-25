@@ -411,24 +411,32 @@ describe('ReadManyFilesTool', () => {
       ]);
     });
 
-    it('should skip PDF files if not explicitly requested by extension or name', async () => {
+    it('should include PDF files even if not explicitly requested by extension or name', async () => {
       createBinaryFile('document.pdf', Buffer.from('%PDF-1.4...'));
       createFile('notes.txt', 'text notes');
       const params = { paths: ['*'] }; // Generic glob, not specific to .pdf
       const invocation = tool.build(params);
       const result = await invocation.execute(new AbortController().signal);
       const content = result.llmContent as string[];
-      const expectedPath = path.join(tempRootDir, 'notes.txt');
+      const expectedPathTxt = path.join(tempRootDir, 'notes.txt');
+      const expectedPathPdf = path.join(tempRootDir, 'document.pdf');
       expect(
         content.some(
           (c) =>
             typeof c === 'string' &&
-            c.includes(`--- ${expectedPath} ---\n\ntext notes\n\n`),
+            c.includes(`--- ${expectedPathTxt} ---\n\ntext notes\n\n`),
         ),
       ).toBe(true);
-      expect(result.returnDisplay).toContain('**Skipped 1 item(s):**');
+      expect(
+        content.some(
+          (c) =>
+            typeof c === 'object' &&
+            c.inlineData &&
+            c.inlineData.mimeType === 'application/pdf',
+        ),
+      ).toBe(true);
       expect(result.returnDisplay).toContain(
-        '- `document.pdf` (Reason: asset file (image/pdf) was not explicitly requested by name or extension)',
+        'Successfully read and concatenated content from **3 file(s)**',
       );
     });
 

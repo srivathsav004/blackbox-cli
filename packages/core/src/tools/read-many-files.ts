@@ -336,29 +336,6 @@ ${finalExclusionPatternsForDescription
 
           const fileType = await detectFileType(filePath);
 
-          if (fileType === 'image' || fileType === 'pdf') {
-            const fileExtension = path.extname(filePath).toLowerCase();
-            const fileNameWithoutExtension = path.basename(
-              filePath,
-              fileExtension,
-            );
-            const requestedExplicitly = inputPatterns.some(
-              (pattern: string) =>
-                pattern.toLowerCase().includes(fileExtension) ||
-                pattern.includes(fileNameWithoutExtension),
-            );
-
-            if (!requestedExplicitly) {
-              return {
-                success: false,
-                filePath,
-                relativePathForDisplay,
-                reason:
-                  'asset file (image/pdf) was not explicitly requested by name or extension',
-              };
-            }
-          }
-
           // Use processSingleFileContent for all file types now
           const fileReadResult = await processSingleFileContent(
             filePath,
